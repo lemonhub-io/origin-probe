@@ -32,11 +32,15 @@ const CN_SERVICES: &[&str] = &[
 const CONTROL: &[&str] = &["github.com", "www.cloudflare.com", "crates.io"];
 
 const CN_DNS: &[&str] = &[
-    "114.114.114.114", "114.114.115.115", // 114DNS
-    "223.5.5.5", "223.6.6.6",             // AliDNS
-    "119.29.29.29", "182.254.116.116",    // DNSPod/Tencent
-    "180.76.76.76",                       // Baidu
-    "1.2.4.8", "210.2.4.8",               // CNNIC
+    "114.114.114.114",
+    "114.114.115.115", // 114DNS
+    "223.5.5.5",
+    "223.6.6.6", // AliDNS
+    "119.29.29.29",
+    "182.254.116.116", // DNSPod/Tencent
+    "180.76.76.76",    // Baidu
+    "1.2.4.8",
+    "210.2.4.8", // CNNIC
 ];
 
 const GLOBAL_DNS: &[&str] = &["8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1", "9.9.9.9"];
@@ -65,7 +69,11 @@ fn resolvers(v: &mut Vec<Finding>) {
         }
     }
     if nameservers.is_empty() {
-        v.push(Finding::fact(Category::Network, "dns resolvers", "none found"));
+        v.push(Finding::fact(
+            Category::Network,
+            "dns resolvers",
+            "none found",
+        ));
         return;
     }
     let joined = nameservers.join(", ");
@@ -106,20 +114,42 @@ fn probe(host: &'static str) -> Probe {
     let addrs: Vec<SocketAddr> = match (host, 443).to_socket_addrs() {
         Ok(it) => it.take(3).collect(),
         Err(e) => {
-            return Probe { host, ok: false, ms: 0, err: Some(format!("dns: {e}")) };
+            return Probe {
+                host,
+                ok: false,
+                ms: 0,
+                err: Some(format!("dns: {e}")),
+            };
         }
     };
     if addrs.is_empty() {
-        return Probe { host, ok: false, ms: 0, err: Some("dns: no address".into()) };
+        return Probe {
+            host,
+            ok: false,
+            ms: 0,
+            err: Some("dns: no address".into()),
+        };
     }
     let mut last_err = None;
     for a in addrs {
         match TcpStream::connect_timeout(&a, Duration::from_millis(1800)) {
-            Ok(_) => return Probe { host, ok: true, ms: t0.elapsed().as_millis(), err: None },
+            Ok(_) => {
+                return Probe {
+                    host,
+                    ok: true,
+                    ms: t0.elapsed().as_millis(),
+                    err: None,
+                }
+            }
             Err(e) => last_err = Some(e.to_string()),
         }
     }
-    Probe { host, ok: false, ms: t0.elapsed().as_millis(), err: last_err }
+    Probe {
+        host,
+        ok: false,
+        ms: t0.elapsed().as_millis(),
+        err: last_err,
+    }
 }
 
 fn reachability(v: &mut Vec<Finding>) {
@@ -150,18 +180,39 @@ fn reachability(v: &mut Vec<Finding>) {
             .join(" ")
     };
 
-    let blocked: Vec<&Probe> = probes.iter().filter(|p| BLOCKED_IN_CN.contains(&p.host)).collect();
-    let cn: Vec<&Probe> = probes.iter().filter(|p| CN_SERVICES.contains(&p.host)).collect();
-    let ctrl: Vec<&Probe> = probes.iter().filter(|p| CONTROL.contains(&p.host)).collect();
+    let blocked: Vec<&Probe> = probes
+        .iter()
+        .filter(|p| BLOCKED_IN_CN.contains(&p.host))
+        .collect();
+    let cn: Vec<&Probe> = probes
+        .iter()
+        .filter(|p| CN_SERVICES.contains(&p.host))
+        .collect();
+    let ctrl: Vec<&Probe> = probes
+        .iter()
+        .filter(|p| CONTROL.contains(&p.host))
+        .collect();
 
     let blocked_ok = blocked.iter().filter(|p| p.ok).count();
     let cn_ok = cn.iter().filter(|p| p.ok).count();
     let ctrl_ok = ctrl.iter().filter(|p| p.ok).count();
     let cn_min = cn.iter().filter(|p| p.ok).map(|p| p.ms).min().unwrap_or(0);
 
-    v.push(Finding::fact(Category::Network, "tcp:443 cn services", fmt(&cn)));
-    v.push(Finding::fact(Category::Network, "tcp:443 gfw-blocked sites", fmt(&blocked)));
-    v.push(Finding::fact(Category::Network, "tcp:443 control sites", fmt(&ctrl)));
+    v.push(Finding::fact(
+        Category::Network,
+        "tcp:443 cn services",
+        fmt(&cn),
+    ));
+    v.push(Finding::fact(
+        Category::Network,
+        "tcp:443 gfw-blocked sites",
+        fmt(&blocked),
+    ));
+    v.push(Finding::fact(
+        Category::Network,
+        "tcp:443 control sites",
+        fmt(&ctrl),
+    ));
 
     if ctrl_ok == 0 && cn_ok == 0 {
         v.push(Finding::fact(
@@ -178,7 +229,11 @@ fn reachability(v: &mut Vec<Finding>) {
         v.push(Finding::signal(
             Category::Network,
             "gfw signature",
-            format!("0/{len} blocked sites reachable, {cn_ok}/{clen} CN services reachable", len = blocked.len(), clen = cn.len()),
+            format!(
+                "0/{len} blocked sites reachable, {cn_ok}/{clen} CN services reachable",
+                len = blocked.len(),
+                clen = cn.len()
+            ),
             15.0,
             true,
             "Google/YouTube/FB/Wikipedia all unreachable while CN services work",
@@ -187,7 +242,10 @@ fn reachability(v: &mut Vec<Finding>) {
         v.push(Finding::signal(
             Category::Network,
             "gfw signature",
-            format!("{blocked_ok}/{len} blocked sites reachable", len = blocked.len()),
+            format!(
+                "{blocked_ok}/{len} blocked sites reachable",
+                len = blocked.len()
+            ),
             0.35,
             false,
             "GFW-blocked sites reachable — outside mainland or on a VPN/proxy",
@@ -196,7 +254,10 @@ fn reachability(v: &mut Vec<Finding>) {
         v.push(Finding::signal(
             Category::Network,
             "gfw signature",
-            format!("{blocked_ok}/{len} blocked sites reachable", len = blocked.len()),
+            format!(
+                "{blocked_ok}/{len} blocked sites reachable",
+                len = blocked.len()
+            ),
             3.0,
             true,
             "partial reachability of blocked sites (unstable proxy or edge case)",
@@ -258,7 +319,11 @@ fn geolocation(v: &mut Vec<Finding>) {
         let isp = get(&["isp", "org"]);
         let tz = get(&["timezone"]);
 
-        v.push(Finding::fact(Category::Network, "public ip", format!("{ip}  (via {name})")));
+        v.push(Finding::fact(
+            Category::Network,
+            "public ip",
+            format!("{ip}  (via {name})"),
+        ));
         if !city.is_empty() || !region.is_empty() || !country.is_empty() {
             v.push(Finding::fact(
                 Category::Network,
@@ -268,9 +333,12 @@ fn geolocation(v: &mut Vec<Finding>) {
         }
         if !isp.is_empty() {
             let l = isp.to_lowercase();
-            let cn_isp = ["telecom", "unicom", "mobile", "cmcc", "chinanet", "cnnic", "aliyun", "tencent", "cernet", "cstnet", "china"]
-                .iter()
-                .any(|k| l.contains(k));
+            let cn_isp = [
+                "telecom", "unicom", "mobile", "cmcc", "chinanet", "cnnic", "aliyun", "tencent",
+                "cernet", "cstnet", "china",
+            ]
+            .iter()
+            .any(|k| l.contains(k));
             if cn_isp {
                 v.push(Finding::signal(
                     Category::Network,
@@ -291,7 +359,11 @@ fn geolocation(v: &mut Vec<Finding>) {
         let (lr, ml, note) = match cc.as_str() {
             "CN" => (25.0, true, "public IP geolocates to mainland China"),
             "HK" | "MO" | "TW" => (2.5, false, "IP in greater-China region (HK/MO/TW)"),
-            "SG" => (1.2, false, "IP in Singapore (large Chinese-speaking population)"),
+            "SG" => (
+                1.2,
+                false,
+                "IP in Singapore (large Chinese-speaking population)",
+            ),
             "" => (1.0, false, ""),
             _ => (0.12, false, "public IP geolocates outside China"),
         };

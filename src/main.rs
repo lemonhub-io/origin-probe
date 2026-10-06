@@ -124,7 +124,12 @@ fn print_json(findings: &[Finding], s: &score::Score) {
     println!("{}", serde_json::to_string_pretty(&out).unwrap());
 }
 
-fn print_report(findings: &[Finding], s: &score::Score, elapsed: std::time::Duration, offline: bool) {
+fn print_report(
+    findings: &[Finding],
+    s: &score::Score,
+    elapsed: std::time::Duration,
+    offline: bool,
+) {
     let tty = io::stdout().is_terminal();
     let (g, r, bold, dim, x) = if tty {
         ("\x1b[32m", "\x1b[31m", "\x1b[1m", "\x1b[2m", "\x1b[0m")
@@ -133,7 +138,11 @@ fn print_report(findings: &[Finding], s: &score::Score, elapsed: std::time::Dura
     };
 
     println!("\n=====================================================================");
-    println!(" origin-probe — report   (collected in {:.1}s{})", elapsed.as_secs_f64(), if offline { ", offline" } else { "" });
+    println!(
+        " origin-probe — report   (collected in {:.1}s{})",
+        elapsed.as_secs_f64(),
+        if offline { ", offline" } else { "" }
+    );
     println!("=====================================================================");
 
     for cat in Category::ALL {
@@ -170,7 +179,10 @@ fn print_report(findings: &[Finding], s: &score::Score, elapsed: std::time::Dura
         println!("  (no signals found either way)");
     } else {
         evidence.sort_by(|a, b| {
-            b.lr.ln().abs().partial_cmp(&a.lr.ln().abs()).unwrap_or(std::cmp::Ordering::Equal)
+            b.lr.ln()
+                .abs()
+                .partial_cmp(&a.lr.ln().abs())
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
         for f in &evidence {
             // Pad before coloring so ANSI escapes don't skew column width.
@@ -181,7 +193,11 @@ fn print_report(findings: &[Finding], s: &score::Score, elapsed: std::time::Dura
                 f.lr.max(1.0 / f.lr),
                 truncate(&f.name, 26),
                 arrow,
-                if f.note.is_empty() { f.observed.clone() } else { f.note.clone() }
+                if f.note.is_empty() {
+                    f.observed.clone()
+                } else {
+                    f.note.clone()
+                }
             );
         }
     }
@@ -197,7 +213,10 @@ fn print_report(findings: &[Finding], s: &score::Score, elapsed: std::time::Dura
     };
     println!("  Estimated probability the device user is Chinese:  {bold}{pct_s}%{x}");
     println!("  Qualitative verdict: {}", score::verdict(s.prob));
-    println!("  Mainland-specific signals: {}   counter-evidence rows: {}", s.mainland_hits, s.counter_evidence);
+    println!(
+        "  Mainland-specific signals: {}   counter-evidence rows: {}",
+        s.mainland_hits, s.counter_evidence
+    );
     if !s.by_category.is_empty() {
         let mut parts: Vec<String> = s
             .by_category

@@ -1,6 +1,6 @@
 [package]
 name = "origin-probe"
-version = "0.2.0"
+version = "0.1.0"
 edition = "2021"
 description = "Collects local environment signals and estimates the likelihood that the current device user is Chinese"
 license = "MIT"
