@@ -1,0 +1,14 @@
+[package]
+name = "origin-probe"
+version = "0.2.0"
+edition = "2021"
+description = "Collects local environment signals and estimates the likelihood that the current device user is Chinese"
+license = "MIT"
+
+[dependencies]
+ureq = { version = "2", features = ["json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+strip = true
