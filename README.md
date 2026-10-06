@@ -45,14 +45,26 @@ This is a heuristic, not identification — locale, timezone and software are
 user-configurable, and IP geolocation reflects the egress point rather than
 the person.
 
+## Platform support
+
+Collectors adapt per OS. Linux has the deepest coverage; macOS probes
+`defaults`/`scutil`/`ioreg`, HIToolbox input sources, /Applications and font
+dirs; Windows probes `tzutil`, the registry (locale, MachineGuid, uninstall
+entries), PowerShell language lists / DNS / NetAdapter, and %WINDIR%\Fonts.
+Network reachability and IP geolocation work everywhere.
+
 ## Layout
 
 ```
-src/main.rs    consent flow, report rendering, --json/--offline flags
-src/finding.rs Finding { category, observed, lr, mainland } model
-src/local.rs   all on-device collectors
-src/net.rs     DNS table, TCP reachability matrix, IP geolocation
-src/score.rs   log-odds combination + verdict bands
+src/main.rs              consent flow, report rendering, --json/--offline flags
+src/finding.rs           Finding { category, observed, lr, mainland } model
+src/local.rs             cross-platform collectors + OS dispatch
+src/platform/linux.rs    /etc, /sys, dpkg, fc-list, IME processes, apt mirrors
+src/platform/macos.rs    defaults, scutil, ioreg, /Applications, Input Methods
+src/platform/windows.rs  tzutil, registry, PowerShell CIM, Fonts dir, netsh
+src/net.rs               DNS table, TCP reachability matrix, IP geolocation
+src/score.rs             log-odds combination + verdict bands
+src/util.rs              shared command/file helpers
 ```
 
 `cargo test` covers the scoring math and the zh locale/accept-language

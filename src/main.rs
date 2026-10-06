@@ -1,7 +1,9 @@
 mod finding;
 mod local;
 mod net;
+mod platform;
 mod score;
+mod util;
 
 use std::io::{self, BufRead, IsTerminal, Write};
 use std::process::ExitCode;
@@ -84,18 +86,21 @@ fn consent(offline: bool) -> bool {
 This tool will inspect the CURRENT device and report a probability that
 its user is Chinese. To do that it will collect:
 
- Local:
-  - os-release, kernel, arch, CPU model, DMI vendor, hostname, username
-  - machine-id and MAC addresses (identifiers; shown truncated/masked)
-  - locale env vars, locale.conf, generated locales, timezone
-  - input-method env vars, processes, config dirs and packages
-  - zh-capable fonts (fc-list)
-  - markers of installed Chinese software (PATH, /opt/apps, flatpak,
-    snap, .desktop entries, dpkg names)
-  - package-mirror config files (~/.npmrc, pip.conf, cargo config,
-    apt sources, docker daemon.json, maven settings, go env, ...)
+ Local (platform-dependent, Linux/macOS/Windows):
+  - OS release, kernel, arch, CPU model, hardware vendor, hostname, username
+  - device identifiers: machine-id / IOPlatformUUID / MachineGuid, serial,
+    MAC addresses (shown truncated/masked)
+  - system locale & language lists, generated locales, timezone, keymap
+  - input-method configuration (fcitx/ibus/sogou/rime, macOS input sources,
+    Windows language list & IME tips)
+  - zh-capable / Chinese font variants
+  - markers of installed Chinese software (PATH, /opt/apps, flatpak, snap,
+    .desktop, dpkg, /Applications, Program Files, uninstall registry)
+  - package-mirror configs (apt/pip/npm/cargo/docker/maven/go/conda, brew
+    and shell-rc exports)
   - git user.name/email, shell-history files (only the COUNT of lines
-    containing Han characters; content is never printed), XDG dir names
+    containing Han characters; content is never printed), XDG dir names,
+    browser Accept-Language (Chromium family + Firefox)
   - current WiFi SSID
  Network:{net}
 Data leaves this machine ONLY via the read-only geolocation queries

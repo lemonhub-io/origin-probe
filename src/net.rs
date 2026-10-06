@@ -31,7 +31,7 @@ const CN_SERVICES: &[&str] = &[
 /// Neutral control hosts reachable nearly everywhere.
 const CONTROL: &[&str] = &["github.com", "www.cloudflare.com", "crates.io"];
 
-const CN_DNS: &[&str] = &[
+pub(crate) const CN_DNS: &[&str] = &[
     "114.114.114.114",
     "114.114.115.115", // 114DNS
     "223.5.5.5",
@@ -43,7 +43,7 @@ const CN_DNS: &[&str] = &[
     "210.2.4.8", // CNNIC
 ];
 
-const GLOBAL_DNS: &[&str] = &["8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1", "9.9.9.9"];
+pub(crate) const GLOBAL_DNS: &[&str] = &["8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1", "9.9.9.9"];
 
 pub fn collect() -> Vec<Finding> {
     let mut v = Vec::new();
@@ -55,6 +55,9 @@ pub fn collect() -> Vec<Finding> {
 
 // --------------------------------------------------------------- resolvers
 
+/// /etc/resolv.conf is unix-only; Windows DNS comes from
+/// `platform::windows` (Get-DnsClientServerAddress) instead.
+#[cfg(unix)]
 fn resolvers(v: &mut Vec<Finding>) {
     let mut nameservers = Vec::new();
     if let Ok(c) = std::fs::read_to_string("/etc/resolv.conf") {
@@ -99,6 +102,9 @@ fn resolvers(v: &mut Vec<Finding>) {
         v.push(Finding::fact(Category::Network, "dns resolvers", joined));
     }
 }
+
+#[cfg(not(unix))]
+fn resolvers(_v: &mut Vec<Finding>) {}
 
 // ------------------------------------------------------------- reachability
 
