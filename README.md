@@ -1,8 +1,8 @@
 # origin-probe
 
-A small Linux CLI that collects signals from the current device and reports
-the estimated probability that its user is Chinese — with an itemized
-evidence table so you can see *why*.
+A small cross-platform CLI that collects signals from the current device
+and reports the estimated probability that its user is Chinese — with an
+itemized evidence table so you can see *why*.
 
 > [!IMPORTANT]
 > **Consent is mandatory.** The tool prints a full list of everything it will
@@ -10,14 +10,34 @@ evidence table so you can see *why*.
 > the only outbound traffic is the read-only IP-geolocation queries listed
 > below.
 
+## Install
+
+Linux / macOS — detects OS, arch and libc, verifies SHA256, installs to
+`~/.local/bin`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/lemonhub-io/origin-probe/main/install.sh | sh
+```
+
+Windows — PowerShell, installs to `%LOCALAPPDATA%\Programs\origin-probe`:
+
+```powershell
+irm https://raw.githubusercontent.com/lemonhub-io/origin-probe/main/install.ps1 | iex
+```
+
+Pin a release with `ORIGIN_PROBE_VERSION` (e.g. `v0.2.0`), change the
+install dir with `ORIGIN_PROBE_DIR`. Prebuilt archives for six targets are
+on the [releases](https://github.com/lemonhub-io/origin-probe/releases) page.
+
 ## Usage
 
 ```sh
-cargo build --release
-./target/release/origin-probe            # consent prompt, then full scan
-./target/release/origin-probe --offline  # skip all network checks
-./target/release/origin-probe --json     # machine-readable report on stdout
+origin-probe            # consent prompt, then full scan
+origin-probe --offline  # skip all network checks
+origin-probe --json     # machine-readable report on stdout
 ```
+
+Or build from source: `cargo build --release`.
 
 ## What it collects
 
